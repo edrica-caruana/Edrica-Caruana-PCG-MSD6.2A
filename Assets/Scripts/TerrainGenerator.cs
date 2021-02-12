@@ -39,13 +39,10 @@ public class TerrainGenerator : MonoBehaviour
     private bool generatePerlinNoiseTerrain = false;
 
     [SerializeField]
-    private bool flattenTerrain = false;    
+    private bool flattenTerrain = false;
 
     [SerializeField]
     private bool addTexture = false;
-
-    [SerializeField]
-    private bool removeTexture = false;
 
     [SerializeField]
     private bool addTree = false;
@@ -54,10 +51,7 @@ public class TerrainGenerator : MonoBehaviour
     private bool addWater = false;
 
     [SerializeField]
-    private bool addClouds = false;
-
-    [SerializeField]
-    private bool finalTouches = false;
+    private bool removeTexture = false;
 
     [SerializeField]
     private float perlinNoiseWidthScale;
@@ -101,13 +95,6 @@ public class TerrainGenerator : MonoBehaviour
     [SerializeField]
     private float waterHeight;
 
-    [SerializeField]
-    private List<GameObject> clouds;
-
-    //60
-    [SerializeField]
-    private float cloudHeight = 0.8f;
-
     void Start()
     {
         terrain = GetComponent<Terrain>();
@@ -147,14 +134,14 @@ public class TerrainGenerator : MonoBehaviour
             CreateTerrain();
         }
 
-        if (addTexture)
-        {
-            TerrainTexture();
-        }
-
         if (removeTexture)
         {
             addTexture = false;
+        }
+
+        if (addTexture)
+        {
+            TerrainTexture();
         }
 
         if (addTree)
@@ -165,16 +152,6 @@ public class TerrainGenerator : MonoBehaviour
         if (addWater)
         {
             AddWater();
-        }
-
-        if (addClouds)
-        {
-            AddClouds();
-        }
-
-        if (finalTouches)
-        {
-            AddFinalTouches();
         }
     }
 
@@ -214,6 +191,27 @@ public class TerrainGenerator : MonoBehaviour
 
     void TerrainTexture()
     {
+        TerrainLayer[] terrainLayers = new TerrainLayer[terrainTextureDataList.Count];
+
+        for (int i = 0; i < terrainTextureDataList.Count; i++)
+        {
+            if (addTexture)
+            {
+                terrainLayers[i] = new TerrainLayer();
+
+                terrainLayers[i].diffuseTexture = terrainTextureDataList[i].terrainTexture;
+
+                terrainLayers[i].tileSize = terrainTextureDataList[i].tileSize;
+            }
+            else if (removeTexture)
+            {
+                terrainLayers[i] = new TerrainLayer();
+                terrainLayers[i].diffuseTexture = null;
+            }
+        }
+
+        terrainData.terrainLayers = terrainLayers;
+
         float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapResolution, terrainData.heightmapResolution);
 
         float[,,] alphaMapList = new float[terrainData.alphamapWidth, terrainData.alphamapHeight, terrainData.alphamapLayers];
@@ -234,6 +232,7 @@ public class TerrainGenerator : MonoBehaviour
                         splatmap[i] = 1;
                     }
                 }
+
                 NormalizeSplatMap(splatmap);
 
                 for (int j = 0; j < terrainTextureDataList.Count; j++)
@@ -244,26 +243,6 @@ public class TerrainGenerator : MonoBehaviour
         }
 
         terrainData.SetAlphamaps(0, 0, alphaMapList);
-
-        TerrainLayer[] terrainLayers = new TerrainLayer[terrainTextureDataList.Count];
-
-        for (int i = 0; i < terrainTextureDataList.Count; i++)
-        {
-            if (addTexture)
-            {
-                terrainLayers[i] = new TerrainLayer();
-
-                terrainLayers[i].diffuseTexture = terrainTextureDataList[i].terrainTexture;
-
-                terrainLayers[i].tileSize = terrainTextureDataList[i].tileSize;
-            }
-            else if (removeTexture)
-            {
-                terrainLayers[i] = new TerrainLayer();
-                terrainLayers[i].diffuseTexture = null;
-            }
-        }
-        terrainData.terrainLayers = terrainLayers;
     }
 
     void NormalizeSplatMap(float[] splatMap)
@@ -293,7 +272,7 @@ public class TerrainGenerator : MonoBehaviour
             trees[i].prefab = treeDataList[i].treeMesh;
         }
 
-        //terrainData.treePrototypes = trees;
+        terrainData.treePrototypes = trees;
 
         List<TreeInstance> treeInstanceList = new List<TreeInstance>();
 
@@ -371,33 +350,5 @@ public class TerrainGenerator : MonoBehaviour
             terrainData.size.z / 2);
 
         waterGameObject.transform.localScale = new Vector3(terrainData.size.x, 1, terrainData.size.z);
-    }
-
-    void AddClouds()
-    {
-        int randomCloud = Random.Range(0, 4);
-
-        cloudHeight = Random.Range(0.7f, 0.9f);
-
-        int cloudsNo = Random.Range(2, 4);
-
-        float cloudOffset = Random.Range(100f, 300f);
-
-        GameObject cloudsGameObject = GameObject.Find("clouds");
-
-        for (int i = 0; i < cloudsNo; i++)
-        {
-            cloudsGameObject = Instantiate(clouds[randomCloud], this.transform.position, this.transform.rotation);
-            cloudsGameObject.name = "clouds";
-        }
-
-        cloudsGameObject.transform.position = new Vector3(terrainData.size.x / Random.Range(2, 100) + cloudOffset, cloudHeight * terrainData.size.y, terrainData.size.z / Random.Range(2, 100) + cloudOffset);
-
-    }
-
-    void AddFinalTouches()
-    {
-        AddTree();
-        AddClouds();
     }
 }
