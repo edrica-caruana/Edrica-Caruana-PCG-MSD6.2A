@@ -45,13 +45,19 @@ public class TerrainGenerator : MonoBehaviour
     private bool addTexture = false;
 
     [SerializeField]
+    private bool removeTexture = false;
+
+    [SerializeField]
     private bool addTree = false;
 
     [SerializeField]
     private bool addWater = false;
 
     [SerializeField]
-    private bool removeTexture = false;
+    private bool addClouds = false;
+
+    [SerializeField]
+    private bool finalTouches = false;
 
     [SerializeField]
     private float perlinNoiseWidthScale;
@@ -68,32 +74,38 @@ public class TerrainGenerator : MonoBehaviour
     [SerializeField]
     private List<TreeData> treeDataList;
 
-    //42
     [SerializeField]
     private int maxTree;
 
-    //43
     [SerializeField]
     private int treeSpacing = 10;
 
-    //51
     [SerializeField]
     private float randomXRange = 5.0f;
 
-    //52
     [SerializeField]
     private float randomZRange = 5.0f;
 
-    //55
     [SerializeField]
     private int terrainLayerIndex = 8;
 
     [SerializeField]
     private GameObject water;
 
-    //60
     [SerializeField]
     private float waterHeight;
+
+    [SerializeField]
+    private List<GameObject> clouds;
+
+    [SerializeField]
+    private float cloudHeight = 0.8f;
+
+    [SerializeField]
+    private GameObject terrainPlayer;
+
+    [SerializeField]
+    private float playerHeight;
 
     void Start()
     {
@@ -104,6 +116,7 @@ public class TerrainGenerator : MonoBehaviour
         CreateTerrain();
         TerrainTexture();
         AddTree();
+        AddTerrainPlayer();
     }
 
     void initialise()
@@ -152,6 +165,16 @@ public class TerrainGenerator : MonoBehaviour
         if (addWater)
         {
             AddWater();
+        }
+
+        if (addClouds)
+        {
+            AddClouds();
+        }
+
+        if (finalTouches)
+        {
+            AddFinalTouches();
         }
     }
 
@@ -350,5 +373,46 @@ public class TerrainGenerator : MonoBehaviour
             terrainData.size.z / 2);
 
         waterGameObject.transform.localScale = new Vector3(terrainData.size.x, 1, terrainData.size.z);
+    }
+
+    void AddClouds()
+    {
+        int randomCloud = Random.Range(0, 4);
+
+        cloudHeight = Random.Range(0.7f, 0.9f);
+
+        int cloudsNo = Random.Range(2, 4);
+
+        float cloudOffset = Random.Range(100f, 300f);
+
+        GameObject cloudsGameObject = GameObject.Find("clouds");
+
+        for (int i = 0; i < cloudsNo; i++)
+        {
+            cloudsGameObject = Instantiate(clouds[randomCloud], this.transform.position, this.transform.rotation);
+            cloudsGameObject.name = "clouds";
+        }
+
+        cloudsGameObject.transform.position = new Vector3(terrainData.size.x / Random.Range(2, 100) + cloudOffset, cloudHeight * terrainData.size.y, terrainData.size.z / Random.Range(2, 100) + cloudOffset);
+    }
+
+    void AddFinalTouches()
+    {
+        AddTree();
+        AddClouds();
+    }
+
+    void AddTerrainPlayer()
+    {
+        playerHeight = Random.Range(0.5f, 0.8f);
+
+        GameObject playerGameObject = GameObject.Find("player");
+
+        if (!playerGameObject)
+        {
+
+            playerGameObject = Instantiate(terrainPlayer, new Vector3(Random.Range(0, terrainData.size.x), 500, Random.Range(0, terrainData.size.z)), this.transform.rotation);
+            playerGameObject.name = "player";
+        }
     }
 }
